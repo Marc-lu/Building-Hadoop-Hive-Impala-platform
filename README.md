@@ -1,7 +1,7 @@
 # Building-Hadoop-Hive-Impala-Platform
 To build a big data platform including hadoop/hive/impala based on server cluster or virtual machines
 
-## 1. fully distributed Hadoop
+## fully distributed Hadoop
 
 ### virtual machines version
 
@@ -249,3 +249,6 @@ execute the following command to login other nodes
 
 4. start JobHistoryServer (MR)
 `$ mr-jobhistory-daemon.sh start historyserver` // namenode start the JobHistoryServer process  
+
+### On server  
+**just skip the 1st and 5th step in `configurate the CentOS7  ` and when you bind the IP or connect the cluster, try to use the static IP instead of public IP address**
