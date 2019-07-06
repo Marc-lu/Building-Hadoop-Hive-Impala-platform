@@ -3,7 +3,7 @@ To build a big data platform including hadoop/hive/impala based on server cluste
 
 ## Fully distributed Hadoop
 
-### virtual machines version
+### On Virtual Machines
 
 Machine: one namenode, two datanodes
 
@@ -17,7 +17,7 @@ Network:
 
 **steps: configurate the namenode first, then copy two machines (datanode1 & datanode2), finally reset the datanodes**
 
-- configurate the CentOS7  
+- Configurate the CentOS7  
 
 1. set the static IP  
 `# vim /etc/sysconfig/network-scripts/ifcfg-en* 
@@ -60,7 +60,7 @@ then append the content as follows
 `# useradd -g hadoop hadoop` //create user 'hadoop' and add it into hadoop group  
 `# passwd hadoop` // set the password for user 'hadoop'  
 
-- install and set the JDK environment  
+- Install and set the JDK environment  
 
 1. download the corresponding rpm package of JDK from Oracle, here use the jdk-8u131-linux-x64 version  
 
@@ -213,7 +213,7 @@ Hadoop3 is datanode2
 # systemctl restart network
 ```  
 
-- set the SSH login without password  
+- Set the SSH login without password  
 **Notice: the following steps must login with haoop account**  
 
 1. create key for all nodes
@@ -247,11 +247,35 @@ execute the following command to login other nodes
 3. start YARN  
 `$ start-yarn.sh` // namenode starts the ResourceManager process, datanodes start the NodeManager process  
 
-4. start JobHistoryServer (MR)
+4. start JobHistoryServer (MR)  
 `$ mr-jobhistory-daemon.sh start historyserver` // namenode start the JobHistoryServer process  
 
-### On server  
+- Test hadoop program `wordcount`  
+1. create two testing files in Local Disk `f1.txt` and `'f2.txt`  
+```
+$ echo "hello world hello you" > f1.txt
+$ echo "hello hadoop hello me" > f2.txt
+```  
+
+2. create directory `wcin` in hdfs to save testing files  
+`$ hdfs dfs -mkdir /wcin`  
+
+3. put these two files into directory `wcin`  
+```
+$ hdfs dfs -put f*.txt /wcin  //upload
+$ hdfs dfs -ls /wcin	      //check
+```  
+4. execute `wordcount` to count the testing files, then put the result into `/wcount` (this directory can't exist before, it will be generated automatically)  
+`$ hadoop jar ~/hadoop-2.6.0-cdh5.12.1/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.6.0-cdh5.12.1.jar wordcount /wcin /wcout`  
+
+5. check the result  
+`$ hdfs dfs -cat /wcout/part-r-00000`  
+
+
+### On Server  
 **just skip the 1st and 5th step in `configurate the CentOS7  ` and when you bind the IP or connect the cluster, try to use the static IP instead of public IP address**
+
+
 
 ## Hive  
 - Install MySQL  
