@@ -123,7 +123,7 @@ to avoid the warning : WARN util.NativeCodeLoader: Unable to load native-hadoop 
     </property>
 </configuration>
 ```  
-**namenode1** and **/home/hadoop/hadoop-2.6.0-cdh5.12.1/** depends on your installment of hadoop 
+the values of **namenode1** and **/home/hadoop/hadoop-2.6.0-cdh5.12.1/** depend on your installment of hadoop 
 
 **hdfs-site.xml ：**  
 ```
