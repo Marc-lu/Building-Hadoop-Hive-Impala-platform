@@ -77,7 +77,7 @@ then append the content as follows
 then restart the configuration file to valid the setting  
 `# source /etc/profile`  
 
-4. test whether the JDK is successfully installed
+4. test whether the JDK is successfully installed  
 `# java -version`
 `java version "1.8.0_131"...`  
 
