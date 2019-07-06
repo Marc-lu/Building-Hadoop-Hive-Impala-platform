@@ -18,20 +18,17 @@ Network:
 **steps: configurate the namenode first, then copy two machines (datanode1 & datanode2), finally reset the datanodes**
 
 - configurate the CentOS7  
+
 1. set the static IP  
-
 `# vim /etc/sysconfig/network-scripts/ifcfg-en* 
-//the content of * depends on your own machine, you can use command 'ls' to check, * is ens32 here `
-
-then write the follow content in it
-
+//the content of * depends on your own machine, you can use command 'ls' to check, * is ens32 here `  
+then write the follow content in it  
 `BOOTPROTO=static`  
 `ONBOOT=yes`  
 `IPADDR=192.168.17.10`  
 `NETMASK=255.255.255.0`  
 `GATEWAY=192.168.17.2`  
 `DNS1=192.168.17.2`  
-
 *if you configurate it on your server, please not to reset your network configuration, or something you nerver expect will happen, don't ask me how to know it*  
 
 2. set the hostname
@@ -164,9 +161,9 @@ the value of **/home/hadoop/hadoop-2.6.0-cdh5.12.1/** depends on your installmen
 
 **yarn-site.xml ：**  
 ```
-		<configuration>
-			<property>
-				<name>yarn.nodemanager.aux-services</name>
+<configuration>
+	<property>
+		<name>yarn.nodemanager.aux-services</name>
 		<value>mapreduce_shuffle</value></property>
 	<property>
 		<name>yarn.resourcemanager.resource-tracker.address</name>
@@ -176,10 +173,10 @@ the value of **/home/hadoop/hadoop-2.6.0-cdh5.12.1/** depends on your installmen
 		<name>yarn.resourcemanager.address</name>
 		<value>namenode1:8032</value>
 	</property>
-<property>
-    	<name>yarn.resourcemanager.admin.address</name>
-<value>namenode1:8033</value>
-</property>
+        <property>
+    		<name>yarn.resourcemanager.admin.address</name>
+		<value>namenode1:8033</value>
+	</property>
 	<property>
 		<name>yarn.resourcemanager.scheduler.address</name>
 		<value>namenode1:8034</value>
@@ -198,9 +195,57 @@ the value of **/home/hadoop/hadoop-2.6.0-cdh5.12.1/** depends on your installmen
 	</property>
 </configuration>
 ```  
-the value of **namenode1** depends on your installment of hadoop  
+the value of **namenode1** depends on your installment of hadoop 
+
 5. set the owner of directory hadoop  
 `chown -R hadoop:hadoop /home/hadoop/hadoop-2.6.0-cdh5.12.1` //modify the owner
 `# ls -ld /home/hadoop/hadoop-2.6.0-cdh5.12.1` //check the result  
 
-- configurate the datanodes
+- configurate the datanodes  
+1. shutdown the namenode machine and make two copies of the namenode machine, then rename them `Hadoop2`、`Hadoop3`  
+Hadoop2 is datanode1  
+Hadoop3 is datanode2  
+
+2. start the machine and change the machine name and hostname、IP address like the namenode configuration, the restart the service  
+```
+# vim /etc/sysconfig/network-scripts/ifcfg-en*
+# vim /etc/hostname
+# systemctl restart network
+```  
+
+- set the SSH login without password  
+**Notice: the following steps must login with haoop account**  
+
+1. create key for all nodes
+`$ ssh-keygen -t rsa` // execute in all nodes to generate respective rsa keys, just press `enter` while being prompted  
+*it will generate public key `id_rsa.pub` and private key `id_rsa` in `/home/hadoop/.ssh` by default*  
+2. sent datanodes's public key to `.ssh/authorized_keys` in namenode1  
+`$ ssh-copy-id -i ~/.ssh/id_rsa.pub namenode1` // execute it in datanodes  
+answer `yes` and input the password of user 'hadoop'  
+
+3. add the public key of namenode1 into `.ssh/authorized_keys` and then distribute it to datanodes  
+```
+$ cd ~/.ssh
+$ cat id_rsa.pub >> authorized_keys				// execute in namenode1 to combine authorized_keys
+$ chmod 600 authorized_keys					//set the privilege of authorized_keys with 600
+$ scp authorized_keys datanode1:.ssh/				// answer `yes` then input the password of user 'hadoop' in datanode1  
+$ scp authorized_keys datanode2:.ssh/				// answer `yes` then input the password of user 'hadoop' in datanode2  
+```  
+
+4. test ssh login
+execute the following command to login other nodes  
+`$ ssh hostname ` // enter `yes`, `hostname` can be datanode1 or namenode1 or others
+
+- Start Hadoop  
+1. format the HDFS file system  
+`$ hdfs namenode -format` // remember that just execute it when you start hadoop in the first time! Just skip it next time  
+
+2. start the HDFS to verify  
+`$ start-dfs.sh` //namenode starts the Namenode process, datanodes start the DataNode process  
+`$ jps` // check the process  
+
+3. start YARN  
+`$ start-yarn.sh` // namenode starts the ResourceManager process, datanodes start the NodeManager process  
+
+4. start JobHistoryServer (MR)
+`$ mr-jobhistory-daemon.sh start historyserver` // namenode start the JobHistoryServer process  
