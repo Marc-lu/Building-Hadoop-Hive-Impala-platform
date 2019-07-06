@@ -17,7 +17,7 @@ Network:
 
 **steps: configurate the namenode first, then copy two machines (datanode1 & datanode2), finally reset the datanodes**
 
-I. configurate the CentOS7  
+- configurate the CentOS7  
 1. set the static IP  
 
 `# vim /etc/sysconfig/network-scripts/ifcfg-en* 
@@ -62,3 +62,136 @@ then append the content as follows
 `# groupadd hadoop` //create hadoop group  
 `# useradd -g hadoop hadoop` //create user 'hadoop' and add it into hadoop group  
 `# passwd hadoop` // set the password for user 'hadoop'  
+
+- install and set the JDK environment  
+
+1. download the corresponding rpm package of JDK from Oracle, here use the jdk-8u131-linux-x64 version  
+
+2. upload the download rpm file to /root directory to install JDK  
+`# cd /root`  
+`# rpm -ivh jdk-8u131-linux-x64.rpm`  
+
+3. append the JDK environment variables in /etc/profile  
+`# vim /etc/profile`  
+`export JAVA_HOME=/usr/java/jdk.1.8.0_131`  
+`export JRE_HOME=$JAVA_HOME/jre`  
+`export CLASSPATH=$JAVA_HOME/lib:$JRE_HOME/lib:.`  
+`export PATH=$JAVA_HOME/bin:$JRE_HOME/bin:$PATH`  
+then restart the configuration file to valid the setting  
+`# source /etc/profile`  
+
+4. test whether the JDK is successfully installed
+`# java -version`
+`java version "1.8.0_131"...`  
+
+- Configurate Hadoop (namenode)
+
+1. download the hadoop package  
+(1)[apache hadoop:](http://www-us.apache.org/dist/hadoop/common/ )  
+(2)[cloudera hadoop(CDH)](http://archive-primary.cloudera.com/cdh5/cdh/5/)(recommended)  
+
+2. install cloudera hadoop-2.6.0-cdh5.12.1  
+`# tar -zxvf hadoop-2.6.0-cdh5.12.1.tar.gz -C /home/hadoop` //decompress  
+`# cd /home/hadoop/hadoop-2.6.0-cdh5.12.1`  
+`# mkdir hdfs hdfs/name hdfs/data logs tmp` // create 5 directories in hadoop directory  
+
+3.  append the hadoop environment variables into `/home/hadoop/.bash_profile`  
+`# vi /home/hadoop/.bash_profile`  
+`export HADOOP_HOME=/home/hadoop/hadoop-2.6.0-cdh5.12.1` // hadoop main directory  
+`export HADOOP_LOG_DIR=$HADOOP_HOME/logs` // hadoop log directory  
+`export YARN_LOG_DIR=$HADOOP_LOG_DIR` //YARN log directory  
+`export PATH=$HADOOP_HOME/bin:$HADOOP_HOME/sbin:$PATH` //add the path of hadoop command  
+
+4. modify nine configuration files (All are in `/home/hadoop/hadoop-2.6.0-cdh5.12.1/etc/hadoop`directory)  
+(1) append JAVA_HOME to hadoop-env.sh、mapred-env.sh、yarn-env.sh
+`export JAVA_HOME=/usr/java/jdk1.8.0_131`  
+(2) append the followed content into `slaves` file (save all the datanodes' hostname)  
+`datanode1`  
+`datenode2`  
+(3) modify the log4j.properties file, append the content to the last line as follows:
+`log4j.logger.org.apache.hadoop.util.NativeCodeLoader=ERROR`  
+to avoid the warning : WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform...  
+(4) edit the content of `core-site.xml`、`hdfs-site.xml`、`mapred-site.xml`、`yarn-site.xml`  
+**core-site.xml ：** 
+```
+<configuration>
+    <property>
+		<name>fs.defaultFS</name>
+		<value>hdfs://namenode1:9000</value>
+    </property>
+    <property>
+		<name>hadoop.tmp.dir</name>
+		<value>/home/hadoop/hadoop-2.6.0-cdh5.12.1/tmp</value>
+</property>
+</configuration>
+```
+
+**hdfs-site.xml ：**  
+```
+<configuration>
+<property>
+		<name>dfs.namenode.name.dir</name>
+<value>/home/hadoop/hadoop-2.6.0-cdh5.12.1/hdfs/name</value>
+</property>
+<property>
+<name>dfs.datanode.data.dir</name>
+<value>/home/hadoop/hadoop-2.6.0-cdh5.12.1/hdfs/data</value>
+</property>
+<property>
+<name>dfs.replication</name>
+<value>2</value>
+</property>
+	<property>
+		<name>dfs.permissions</name>
+		<value>false</value>
+	</property>
+</configuration>
+```
+
+**mapred-site.xml ：**  
+```
+# cp mapred-site.xml.template mapred-site.xml		//use the template to create the file
+<configuration>
+<property>
+<name>mapreduce.framework.name</name>
+<value>yarn</value>
+</property>
+</configuration>
+```
+
+**yarn-site.xml ：**  
+```
+		<configuration>
+			<property>
+				<name>yarn.nodemanager.aux-services</name>
+		<value>mapreduce_shuffle</value></property>
+	<property>
+		<name>yarn.resourcemanager.resource-tracker.address</name>
+		<value>namenode1:8031</value>
+	</property>
+	<property>
+		<name>yarn.resourcemanager.address</name>
+		<value>namenode1:8032</value>
+	</property>
+<property>
+    	<name>yarn.resourcemanager.admin.address</name>
+<value>namenode1:8033</value>
+</property>
+	<property>
+		<name>yarn.resourcemanager.scheduler.address</name>
+		<value>namenode1:8034</value>
+	</property>
+	<property>
+		<name>yarn.resourcemanager.webapp.address</name>
+		<value>namenode1:8088</value>
+	</property>
+	<property>
+		<name>yarn.log-aggregation-enable</name>
+		<value>true</value>
+	</property>
+	<property>
+  		<name>yarn.log.server.url</name>
+		<value>http://namenode1:19888/jobhistory/logs/</value>
+	</property>
+</configuration>
+```
