@@ -88,7 +88,7 @@ then restart the configuration file to valid the setting
 
 1. download the hadoop package  
 (1)[apache hadoop:](http://www-us.apache.org/dist/hadoop/common/ )  
-(2)[cloudera hadoop(CDH)](http://archive-primary.cloudera.com/cdh5/cdh/5/)(recommended)  
+(2)[cloudera hadoop(CDH)](http://archive-primary.cloudera.com/cdh5/cdh/5/) (recommended)  
 
 2. install cloudera hadoop-2.6.0-cdh5.12.1  
 `# tar -zxvf hadoop-2.6.0-cdh5.12.1.tar.gz -C /home/hadoop` //decompress  
@@ -102,7 +102,7 @@ then restart the configuration file to valid the setting
 `export YARN_LOG_DIR=$HADOOP_LOG_DIR` //YARN log directory  
 `export PATH=$HADOOP_HOME/bin:$HADOOP_HOME/sbin:$PATH` //add the path of hadoop command  
 
-4. modify nine configuration files (All are in `/home/hadoop/hadoop-2.6.0-cdh5.12.1/etc/hadoop`directory)  
+4. modify nine configuration files (All are in `/home/hadoop/hadoop-2.6.0-cdh5.12.1/etc/hadoop`)  
 (1) append JAVA_HOME to hadoop-env.sh、mapred-env.sh、yarn-env.sh
 `export JAVA_HOME=/usr/java/jdk1.8.0_131`  
 (2) append the followed content into `slaves` file (save all the datanodes' hostname)  
@@ -112,6 +112,7 @@ then restart the configuration file to valid the setting
 `log4j.logger.org.apache.hadoop.util.NativeCodeLoader=ERROR`  
 to avoid the warning : WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform...  
 (4) edit the content of `core-site.xml`、`hdfs-site.xml`、`mapred-site.xml`、`yarn-site.xml`  
+*Notes: these all 9 files can be upload and decompress into the `/home/hadoop/hadoop-2.6.0-cdh5.12.1/etc/hadoop` to rewrite the files by Winscp, I will give the resoures *
 **core-site.xml ：** 
 ```
 <configuration>
@@ -122,31 +123,33 @@ to avoid the warning : WARN util.NativeCodeLoader: Unable to load native-hadoop 
     <property>
 		<name>hadoop.tmp.dir</name>
 		<value>/home/hadoop/hadoop-2.6.0-cdh5.12.1/tmp</value>
-</property>
+    </property>
 </configuration>
-```
+```  
+**namenode1** and **/home/hadoop/hadoop-2.6.0-cdh5.12.1/** depends on your installment of hadoop 
 
 **hdfs-site.xml ：**  
 ```
 <configuration>
-<property>
+	<property>
 		<name>dfs.namenode.name.dir</name>
-<value>/home/hadoop/hadoop-2.6.0-cdh5.12.1/hdfs/name</value>
-</property>
-<property>
-<name>dfs.datanode.data.dir</name>
-<value>/home/hadoop/hadoop-2.6.0-cdh5.12.1/hdfs/data</value>
-</property>
-<property>
-<name>dfs.replication</name>
-<value>2</value>
-</property>
+		<value>/home/hadoop/hadoop-2.6.0-cdh5.12.1/hdfs/name</value>
+	</property>
+	<property>
+		<name>dfs.datanode.data.dir</name>
+		<value>/home/hadoop/hadoop-2.6.0-cdh5.12.1/hdfs/data</value>
+	</property>
+	<property>
+		<name>dfs.replication</name>
+		<value>2</value>
+	</property>
 	<property>
 		<name>dfs.permissions</name>
 		<value>false</value>
 	</property>
 </configuration>
-```
+```  
+the value of **/home/hadoop/hadoop-2.6.0-cdh5.12.1/** depends on your installment of hadoop
 
 **mapred-site.xml ：**  
 ```
@@ -194,4 +197,10 @@ to avoid the warning : WARN util.NativeCodeLoader: Unable to load native-hadoop 
 		<value>http://namenode1:19888/jobhistory/logs/</value>
 	</property>
 </configuration>
-```
+```  
+the value of **namenode1** depends on your installment of hadoop  
+5. set the owner of directory hadoop  
+`chown -R hadoop:hadoop /home/hadoop/hadoop-2.6.0-cdh5.12.1` //modify the owner
+`# ls -ld /home/hadoop/hadoop-2.6.0-cdh5.12.1` //check the result  
+
+- configurate the datanodes
