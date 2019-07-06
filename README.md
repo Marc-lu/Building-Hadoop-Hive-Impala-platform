@@ -1,7 +1,7 @@
 # Building-Hadoop-Hive-Impala-Platform
 To build a big data platform including hadoop/hive/impala based on server cluster or virtual machines
 
-## fully distributed Hadoop
+## Fully distributed Hadoop
 
 ### virtual machines version
 
@@ -252,3 +252,242 @@ execute the following command to login other nodes
 
 ### On server  
 **just skip the 1st and 5th step in `configurate the CentOS7  ` and when you bind the IP or connect the cluster, try to use the static IP instead of public IP address**
+
+## Hive  
+- Install MySQL  
+1. upload the configuration files of MySQL by `WinSCP` (connect CentOS with `root` account)
+(1) upload `mysql-community.repo` to `/etc/yum.repos.d/`  
+(2) upload `RPM-GPG-KEY-mysql` to `/etc/pki/rpm-gpg/`  
+
+2. update `yum` and install `mysql server` (install the `mysql client` by defalut at the same time)  
+```
+# yum repolist
+# yum install mysql-server
+```  
+
+3. check out whether the components of MySQL are installed successfully  
+`# rpm -qa | grep mysql`  
+
+- Configurate MySQL  
+1. start MySQL Server and check the status  
+```
+# systemctl start mysqld
+# systemctl status mysqld
+```  
+
+2. check the version of MySQL  
+`# mysql -V`  
+
+3. connect the MySQL, the default password is null  
+`# mysql -u root`  
+`mysql>`  
+
+4. check the database  
+`mysql>show databases;` // be careful that it must be end with `;`, or the input character `>` will continue come up  
+
+5. create hive metastore  
+`mysql> create database hive;`  
+`mysql>show databases;`  
+
+6. create user `hive`, password `123456`  
+`mysql>create user 'hive'@'%' identified by '123456';`  
+Notice: `drop user` is the command of delete users  
+
+7. authorize `hadoop` user all the privileges of database 'hive'  
+`mysql>grant all privileges on hive.* to 'hive'@'%' with grant option;`  
+
+8. check the new created MySQL user (database name:`mysql`, table name:`user`)  
+`mysql> select host,user,password from mysql.user;`  
+
+9. delete the null record of user, or you can't login with user `hive`  
+`mysql> delete from mysql.user where user='';`  
+
+10. refresh the system authorized table (no needs to restart mysql service)  
+`mysql>flush privileges;`  
+
+11. testing for login with user `hive`  
+`$ mysql -u hive -p`  
+`Enter password：123456`  
+
+- Install and Config hive  
+1. download [hive](http://archive.cloudera.com/cdh5/cdh/5/) CDH version, then upload it to `/home/hadoop` in CentOS with `WinSCP`  
+
+2. decompress `hive-1.1.0-cdh5.12.1.tar.gz` to `/home/hadoop`  
+`$ tar zxvf hive-1.1.0-cdh5.12.1.tar.gz`  
+
+3. add the hive environment variables into `.bash_profile`  
+```
+export HIVE_HOME=/home/hadoop/hive-1.1.0-cdh5.12.1
+export PATH=$HIVE_HOME/bin:$PATH
+```  
+
+4. valid the settings above  
+`$ source .bash_profile`  
+
+5. edit `$HIVE_HOME/conf/hive-env.sh`, append `HADOOP_HOME` in it  
+```
+$ cd $HIVE_HOME/conf
+$ cp hive-env.sh.template hive-env.sh
+$ vim hive-env.sh
+HADOOP_HOME=/home/hadoop/hadoop-2.6.0-cdh5.12.1
+```  
+
+6. create the file `$HIVE_HOME/conf/hive-site.xml`  
+```
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<configuration>
+        <property>
+                <name>javax.jdo.option.ConnectionDriverName</name>
+                <value>com.mysql.jdbc.Driver</value>
+        </property>
+        <property>
+                <name>javax.jdo.option.ConnectionURL</name>
+                <value>jdbc:mysql://192.168.17.10:3306/hive</value>
+        </property>
+        <property>
+                <name>javax.jdo.option.ConnectionUserName</name>
+                <value>hive</value>
+        </property>
+        <property>
+                <name>javax.jdo.option.ConnectionPassword</name>
+                <value>123456</value>
+        </property>
+
+	<property>
+		<name>hive.metastore.warehouse.dir</name>
+		<value>/hive/warehouse</value>
+	</property>
+	<property>
+		<name>hive.exec.scratchdir</name>
+		<value>/hive/tmp </value>
+	</property>
+        <property>
+                <name>hive.metastore.schema.verification</name>
+                <value>false</value>
+        </property>
+</configuration>
+```  
+the value of **jdbc:mysql://192.168.17.10:3306/hive** depends on your machine  
+
+7. create the directory of data warehouse(to store hive data files) and temporary dicretory in HDFS  
+`$ hdfs dfs -mkdir -p /hive/warehouse /hive/tmp`  
+
+8. download [the driver of mysql connection](https://dev.mysql.com/downloads/connector/j/)  
+upload the driver(here is `mysql-connector-java-8.0.13.jar`) to `$HIVE_HOME/lib`  
+
+9. start hive  
+`$ hive`  
+
+10. check hive database  
+`hive> show databases;`  
+
+11. exit hive  
+`hive> quit;`  
+
+- Hive Command  
+1. check hive environment  
+`hive> set`  
+`hive> set param=value;` // the setting just valid this time  
+
+2. check tables in database  
+`hive> show tables;` // check tables in current database  
+`hive> show tables in default;` // check tables in selected database  
+
+3. create table
+`hive> create table user(id int, name string);`  
+
+4. check the structure of table  
+`hive> desc user;`  
+`hive> desc formatted user;` // check the details  
+
+5. insert data  
+``hive> insert into user values (1,’zhao’);``  
+``hive> insert into user values (2,’qian’),(3,’sun’),(4,’li’);``  
+
+6. check data  
+``hive> select * from user;``  
+
+7. updata and delete data (not supported in hive at pesent)
+`hive> update user set name=’wang’ where id=1;`  
+`hive> delete from user where id=1;`  
+
+8. create database  
+`hive> create database mydb;` create in the default location  
+`hive> create database testdb location ‘/hive/testdb’;`	create in selected directory of hdfs  
+
+9. check the structure of database  
+`hive> desc database testdb;`  
+
+10. jump to other databases  
+`hive> use testdb;`  
+
+11. delete database  
+`hive> drop database testdb; ` // can only delete null database
+`hive> drop database mydb cascade;` // delete not-null database
+
+12. generate the data file with rand.sh including five pieces of data  
+`$ ./rand.sh 5 > d1.txt`  
+create datelist  
+`hive> create table datelist (date string, no int);`  
+load data form local linux file system into hive table (cause error by separation symbol)  
+`hive> load data local inpath ‘/home/hadoop/d1.txt’ into table datelist;`  
+modify separation symbol to hive default separation symbol `^A` by sed, and then reload  
+`$ sed ‘s/ /^A/g’ d1.txt > d2.txt`  
+`hive> load data local inpath ‘/home/hadoop/d2.txt’ into table datelist;` //append load  
+`hive> load data local inpath ‘/home/hadoop/d2.txt’ overwrite into table datelist;` // overwrite load  
+create datelist2 (self-custom separation symbol) and load the data  
+```
+hive> create table datelist2 (date string, no int) row format delimited  
+	> fields terminated by ‘ ‘  lines terminated by ‘\n’;
+hive> load data local inpath ‘/home/hadoop/d1.txt’ into table datelist2` 
+```  
+
+13. inner join
+`hive> select id, name, date from user, datelist where id=no;`  
+
+14. sort
+`hive> select id, name, date from user, datelist where id=no order by date desc;`  
+
+15. execute shell comand in hive(add `!` ahead of shell command)  
+`hive> ! ls /home/Hadoop`  
+
+16. execute HDFS command in hive(discard prefix `hdfs`)  
+`hive> dfs -ls /hive`  
+
+17. execute hive command in shell  
+`$ hive -e ‘select * from user ‘| more`  
+
+18. execute the script of hive command  
+`$ hive -f hive.hql`  
+
+- Hive API  
+1. add hive dependecy in `pom.xml` of maven project  
+```
+<dependency>
+	<groupId>org.apache.hive</groupId>
+	<artifactId>hive-exec</artifactId>
+	<version>1.1.0</version>
+	<exclusions>
+		<exclusion>
+			<artifactId>
+				pentaho-aggdesigner-algorithm
+			</artifactId>
+			<groupId>org.pentaho</groupId>
+		</exclusion>
+	</exclusions>
+</dependency>
+
+<dependency>
+	<groupId>org.apache.hive</groupId>
+	<artifactId>hive-jdbc</artifactId>
+	<version>1.1.0</version>
+</dependency>
+```  
+*maven will download the packages related with hive automatically *  
+
+2. create `package` and `class` in `src/main/java` (maven project)  
+
+3. code and run, check the result in console
+
+hiveserver2
