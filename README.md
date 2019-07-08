@@ -1,6 +1,16 @@
 # Building-Hadoop-Hive-Impala-Platform
 To build a big data platform including hadoop/hive/impala based on server cluster or virtual machines
 
+[WinSCP](https://pan.baidu.com/s/1rkdnykjqzxeC4-RccRJqmQ) 提取码：fd61  
+[jdk-8u131-linux-x64](https://pan.baidu.com/s/1xcwKWgSng-sxmFAyBfAaQA) 提取码：a9oo  
+[hadoop-2.6.0-cdh5.12.1](https://pan.baidu.com/s/1qI4y0jVhUNEPHtGB0iQFSw) 提取码：gzp2  
+[mysql-connector-java-8.0.13](https://pan.baidu.com/s/1BWG9eGkO6EnWlIJqPbfD2Q) 提取码：64vj  
+[hive-1.1.0-cdh5.12.1](https://pan.baidu.com/s/1-QblpExixrfDFCxyz1PPYw) 提取码：ff1d  
+[configuration files of MySQL](https://pan.baidu.com/s/18Zw8n8PlrGF4vsgDDhSohw) 提取码：5aa1  
+[impala-kudu](https://pan.baidu.com/s/1j9MurH0J_OMKXTLqjcsHOg) 提取码：orp3  
+[对应版本的impala](http://archive.cloudera.com/beta/impala-kudu/redhat/7/x86_64/impala-kudu/0/RPMS/x86_64/) 根据cdh版本选择  
+[对应版本的bigtop-utils-0.7.0+cdh5.12.1+0-1.cdh5.12.1.p0.3.el7.noarch](http://archive.cloudera.com/cdh5/redhat/7/x86_64/cdh/5.12.1/RPMS/noarch/) 根据cdh版本选择  
+
 ## Fully distributed Hadoop
 
 ### On Virtual Machines
